@@ -1,2 +1,2 @@
-# myresume/index.html
+# myresume/index_new.html
 my interactive resume
