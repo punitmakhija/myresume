@@ -1,4 +1,4 @@
-name: Convert Resume DOCX to HTML
+name: Convert DOCX to HTML and Commit
 
 on:
   push:
@@ -6,12 +6,12 @@ on:
       - 'resume.docx' # Trigger when resume.docx is pushed or updated
 
 jobs:
-  convert-and-deploy:
+  convert-and-commit:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Use v4 for the latest version
+        uses: actions/checkout@v4 # Use v4 for the latest actions/checkout
 
       - name: Install Pandoc
         run: |
@@ -22,25 +22,28 @@ jobs:
         run: |
           pandoc -s resume.docx -o index.html
 
-      - name: Add Interactive Elements (Optional - if you want custom CSS/JS)
+      - name: Add Interactive Elements (Optional - if you have custom CSS/JS)
+        # This step assumes custom.css and custom.js are in the root directory
         run: |
-          # This is an example. You'll need to create custom.css and custom.js
-          echo '<link rel="stylesheet" href="custom.css">' >> index.html
-          echo '<script src="custom.js"></script>' >> index.html
+          if [ -f "custom.css" ]; then
+            sed -i '/<\/head>/i\    <link rel="stylesheet" href="custom.css">' index.html
+          fi
+          if [ -f "custom.js" ]; then
+            sed -i '/<\/body>/i\    <script src="custom.js"></script>' index.html
+          fi
 
-      - name: Upload HTML to GitHub Pages (Example Deployment)
-        uses: peaceiris/actions-gh-pages@v3 # Use v3 for stability
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          # Keep history for incremental updates (optional)
-          # publish_branch: gh-pages # Default branch for GitHub Pages
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Alternative: Deploy to Netlify (Requires Netlify CLI and API Token)
-      # - name: Deploy to Netlify
-      #   run: |
-      #     npm install netlify-cli -g
-      #     netlify deploy --prod --dir=.
-      #   env:
-      #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Commit and Push index.html
+        run: |
+          git add index.html
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to index.html to commit."
+          else
+            git commit -m "Auto-generate index.html from resume.docx"
+            git push
+          fi
