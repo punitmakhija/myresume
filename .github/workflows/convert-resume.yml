@@ -19,19 +19,17 @@ jobs:
           python-version: '3.x'
 
       - name: Install mammoth (docx to HTML converter)
-        run: |
-          pip install mammoth
+        run: pip install mammoth
 
       - name: Convert resume.docx to index.html
         run: |
-          python <<EOF
+          python3 -c "
 import mammoth
-
-with open("resume.docx", "rb") as docx_file:
+with open('resume.docx', 'rb') as docx_file:
     result = mammoth.convert_to_html(docx_file)
-    with open("index.html", "w") as html_file:
+    with open('index.html', 'w') as html_file:
         html_file.write(result.value)
-EOF
+"
 
       - name: Commit and push index.html
         run: |
